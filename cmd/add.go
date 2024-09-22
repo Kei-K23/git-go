@@ -6,12 +6,11 @@ package cmd
 import (
 	"bytes"
 	"compress/zlib"
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/Kei-K23/git-go/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -25,16 +24,17 @@ var addCmd = &cobra.Command{
 				// TODO:: Check whether should i use log.Fatalln or fmt.println
 				log.Fatalf("File '%s' does not exist", file)
 			} else {
-				// Read file content that user provided to add to staging area
+				// Read file content
 				fileContentBytes, err := os.ReadFile(file)
-
 				if err != nil {
 					log.Fatalf("Cannot read the content of file '%s'", file)
 				}
-				// Get hash value of file content
-				hasher := sha1.New()
-				hasher.Write(fileContentBytes)
-				hashValue := hex.EncodeToString(hasher.Sum(nil)) // Get hash value from file content
+
+				// Generate the hash value from file content
+				hashValue, err := utils.HandFileContent(fileContentBytes)
+				if err != nil {
+					log.Fatalf("Cannot read the content of file '%s'", file)
+				}
 
 				// Create file and folder to store compressed blob content
 				os.Mkdir(fmt.Sprintf(".git-go/objects/%s", hashValue[:2]), 0755)
@@ -58,9 +58,8 @@ var addCmd = &cobra.Command{
 				// Add compressed file content call blob to objects file
 				blobFile.Write(compressBuf.Bytes())
 
-				// TODO:: Make index file handle latest staged hash value for each file
 				// Add hash value and file name to index file inside .git-go (meaning add file to staging area)
-				// example content of index file data without compression 100644 blob 76c7b5bdd3d61bb2657e00b06870f4553294d2a9    README.md
+				// example content of index file data without compression 100644 76c7b5bdd3d61bb2657e00b06870f4553294d2a9 README.md
 				indexValue := fmt.Sprintf("100644 %s %s\n", hashValue, file)
 
 				indexFile, err := os.OpenFile(".git-go/index", os.O_APPEND|os.O_WRONLY, 0644)
