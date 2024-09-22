@@ -1,11 +1,10 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Kei-K23 <arkar.dev.kei@gmail.com>
 */
 package cmd
 
 import (
 	"bytes"
-	"compress/zlib"
 	"fmt"
 	"log"
 	"os"
@@ -48,8 +47,8 @@ var addCmd = &cobra.Command{
 				defer blobFile.Close()
 				// Create new zlib compress writer
 				var compressBuf bytes.Buffer
-				compressWriter := zlib.NewWriter(&compressBuf)
-				_, err = compressWriter.Write(fileContentBytes)
+
+				err = utils.CompressContent(&compressBuf, fileContentBytes)
 
 				if err != nil {
 					log.Fatalln("Error when compressing file content")

@@ -1,7 +1,11 @@
+/*
+Copyright © 2024 Kei-K23 <arkar.dev.kei@gmail.com>
+*/
 package utils
 
 import (
 	"bytes"
+	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -53,7 +57,6 @@ func ReadIndexFile() []IndexEntry {
 }
 
 func WriteIndexFile(entries []IndexEntry) error {
-
 	indexFile, err := os.OpenFile(".git-go/index", os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_APPEND, 0644)
 	if err != nil {
 		return err
@@ -69,6 +72,20 @@ func WriteIndexFile(entries []IndexEntry) error {
 			return err
 		}
 	}
+
+	var indexFileContent bytes.Buffer
+	indexFile.Read(indexFileContent.Bytes())
+	var compressBuf bytes.Buffer
+
+	// Compress the content of index file
+	err = CompressContent(&compressBuf, indexFileContent.Bytes())
+
+	if err != nil {
+		return err
+	}
+
+	// Write compressed content back to index file
+	indexFile.Write(compressBuf.Bytes())
 
 	return nil
 }
@@ -103,4 +120,32 @@ func HandFileContent(fileContentBytes []byte) (string, error) {
 	h.Write(fileContentBytes)
 	// Get hash value from file content
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// Utility function for file content compression
+func CompressContent(compressBuf *bytes.Buffer, fileContentBytes []byte) error {
+	compressWriter := zlib.NewWriter(compressBuf)
+	_, err := compressWriter.Write(fileContentBytes)
+	defer compressWriter.Close()
+
+	return err
+}
+
+// Utility function for file content decompression
+func DecompressContent(compressedBuf *bytes.Buffer) ([]byte, error) {
+	decompressReader, err := zlib.NewReader(compressedBuf)
+
+	if err != nil {
+		return nil, err
+	}
+	defer decompressReader.Close()
+	var decompressBuf bytes.Buffer
+	_, err = decompressReader.Read(decompressBuf.Bytes())
+
+	if err != nil {
+		return nil, err
+	}
+	defer decompressReader.Close()
+
+	return decompressBuf.Bytes(), nil
 }
