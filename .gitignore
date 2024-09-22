@@ -1,4 +1,7 @@
 # NOTE:: .git-go is like .git-go, I omitted .git-go folder during development
 .git-go
+# NOTE:: test.txt is use to test command in developement
+test.txt
+
 .env
 go.sum

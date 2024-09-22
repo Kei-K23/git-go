@@ -37,6 +37,7 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln("Error when creating HEAD file in .git-go")
 		}
+		defer headFile.Close()
 
 		content := []byte("ref: refs/heads/master\n")
 		headFile.Write(content)
