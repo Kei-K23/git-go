@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"os"
 )
@@ -15,7 +16,6 @@ type IndexEntry struct {
 }
 
 func ReadIndexFile() []IndexEntry {
-	// indexFile, err := ÷os(".git-go/index", os.O_APPEND|os.O_WRONLY, 0644)
 	var indexFileBuf bytes.Buffer
 	indexFile, err := os.Open(".git-go/index")
 	if err != nil {
@@ -52,10 +52,55 @@ func ReadIndexFile() []IndexEntry {
 	return entries
 }
 
+func WriteIndexFile(entries []IndexEntry) error {
+
+	indexFile, err := os.OpenFile(".git-go/index", os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	// Close the resource
+	defer indexFile.Close()
+
+	for _, entry := range entries {
+		entryValue := fmt.Sprintf("%s %s %s\n", entry.Mode, entry.Hash, entry.Path)
+		// Write back to index file with updated information
+		_, err := indexFile.Write([]byte(entryValue))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func UpdateIndexFileHashValue(entries []IndexEntry, filepath string, newHash string) []IndexEntry {
+	var isUpdated bool
+	for i, entry := range entries {
+		if entry.Path == filepath {
+			if entry.Hash != newHash {
+				// Update the hash value
+				entries[i].Hash = newHash
+				isUpdated = true
+			}
+		}
+	}
+	// If index entry is new, them add to entry array slice
+	if !isUpdated {
+		newIndexEntry := IndexEntry{
+			Mode: "100644",
+			Hash: newHash,
+			Path: filepath,
+		}
+		entries = append(entries, newIndexEntry)
+	}
+
+	return entries
+}
+
 func HandFileContent(fileContentBytes []byte) (string, error) {
 	// Get hash value of file content
-	hasher := sha1.New()
-	hasher.Write(fileContentBytes)
+	h := sha1.New()
+	h.Write(fileContentBytes)
 	// Get hash value from file content
-	return hex.EncodeToString(hasher.Sum(nil)), nil
+	return hex.EncodeToString(h.Sum(nil)), nil
 }

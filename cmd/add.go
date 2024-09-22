@@ -60,18 +60,14 @@ var addCmd = &cobra.Command{
 
 				// Add hash value and file name to index file inside .git-go (meaning add file to staging area)
 				// example content of index file data without compression 100644 76c7b5bdd3d61bb2657e00b06870f4553294d2a9 README.md
-				indexValue := fmt.Sprintf("100644 %s %s\n", hashValue, file)
+				entries := utils.ReadIndexFile()
 
-				indexFile, err := os.OpenFile(".git-go/index", os.O_APPEND|os.O_WRONLY, 0644)
+				updatedEntires := utils.UpdateIndexFileHashValue(entries, file, hashValue)
+
+				err = utils.WriteIndexFile(updatedEntires)
 
 				if err != nil {
-					log.Fatalln("Error when opening index file")
-				}
-
-				defer indexFile.Close()
-
-				if _, err := indexFile.Write([]byte(indexValue)); err != nil {
-					log.Fatal("Error when writing index file")
+					log.Fatalln("Error when adding entry to index file")
 				}
 
 				fmt.Printf("Stored object as : %s\n", blogFilePath)
