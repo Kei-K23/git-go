@@ -1,0 +1,3 @@
+# NOTE:: .git-go is like .git-go, I omitted .git-go folder during development
+.git-go
+.env
