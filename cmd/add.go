@@ -4,8 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"os"
 
@@ -31,10 +34,34 @@ var addCmd = &cobra.Command{
 				// Get hash value of file content
 				hasher := sha1.New()
 				hasher.Write(fileContentBytes)
-				hex.EncodeToString(hasher.Sum(nil)) // Get hash value from file content
-				// Create file and folder to store compressed blob content
+				hashValue := hex.EncodeToString(hasher.Sum(nil)) // Get hash value from file content
 
-				// Add compressed file content call blob to objects folder
+				fmt.Println(hashValue)
+				fmt.Println()
+				fmt.Println(hashValue[2:])
+				// Create file and folder to store compressed blob content
+				os.Mkdir(fmt.Sprintf(".git-go/objects/%s", hashValue[:2]), 0755)
+				blogFilePath := fmt.Sprintf(".git-go/objects/%s/%s", hashValue[:2], hashValue[2:])
+
+				blobFile, err := os.Create(blogFilePath)
+
+				if err != nil {
+					log.Fatalln("Error when creating blob file in .git-go/objects")
+				}
+
+				// Create new zlib compress writer
+				var compressBuf bytes.Buffer
+				compressWriter := zlib.NewWriter(&compressBuf)
+				_, err = compressWriter.Write(fileContentBytes)
+
+				if err != nil {
+					log.Fatalln("Error when compressing file content")
+				}
+
+				// Add compressed file content call blob to objects file
+				blobFile.Write(compressBuf.Bytes())
+
+				fmt.Printf("Stored object as : %s\n", blogFilePath)
 			}
 		}
 	},
