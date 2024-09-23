@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type IndexEntry struct {
@@ -213,12 +214,36 @@ func GetCurrentCommit() string {
 
 	var latestCommitBuf bytes.Buffer
 	latestCommitFile, err := os.Open(latestCommitFilePath)
-	if err != nil {
-		log.Fatalln("Error while reading commit file")
+	if os.IsNotExist(err) {
+		return ""
 	}
 
 	latestCommitBuf.ReadFrom(latestCommitFile)
 
 	// Return the hash value of latest commit obj hash value
 	return latestCommitBuf.String()
+}
+
+// Function to update the latest commit hash value in the branch reference file
+func UpdateCommitHashValue(newHash string) {
+	currentBranch := GerCurrentBranch() // Get the current branch (assumed already implemented)
+	latestCommitFilePath := fmt.Sprintf(".git-go/refs/heads/%s", currentBranch)
+
+	// Open the file for writing, truncate the content but don't recreate it
+	latestCommitFile, err := os.OpenFile(latestCommitFilePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatalf("Error when opening current branch file: %v", err)
+	}
+	defer latestCommitFile.Close()
+
+	// Write the new hash value to the file
+	_, err = latestCommitFile.Write([]byte(newHash))
+	if err != nil {
+		log.Fatalf("Error writing commit hash to file: %v", err)
+	}
+}
+
+// Get the current time in RFC3339 format
+func GetCurrentTime() string {
+	return time.Now().Format(time.RFC3339)
 }

@@ -59,7 +59,7 @@ var commitCmd = &cobra.Command{
 		treeObj, err := os.Create(blogFilePath)
 
 		if err != nil {
-			log.Fatalln("Error when creating tree object file in .git-go/objects")
+			log.Fatalln("Error when creating tree object")
 		}
 		defer treeObj.Close()
 
@@ -73,11 +73,48 @@ var commitCmd = &cobra.Command{
 		// Add compressed file content call blob to objects file
 		treeObj.Write(treeCompressBuf.Bytes())
 
-		// TODO : handle to include Parent commit
 		// Create commit obj blob
 		var commitObjSb strings.Builder
-		commitObjSb.WriteString(fmt.Sprintf("Tree: %s", treeHash))
+		commitObjSb.WriteString(fmt.Sprintf("Tree: %s\n", treeHash))
 
+		// Get and check current commit hash value to add as parent commit
+		latestCommit := utils.GetCurrentCommit()
+		if latestCommit != "" {
+			// Add current commit hash value as parent commit when create new commit
+			commitObjSb.WriteString(fmt.Sprintf("Parent: %s\n", latestCommit))
+		}
+
+		// TODO : Handle hard coded value of author name and email
+		commitObjSb.WriteString(fmt.Sprintf("Author: %s\n", "author"))
+		commitObjSb.WriteString(fmt.Sprintf("Email: %s\n", "author@gmail.com"))
+		commitObjSb.WriteString(fmt.Sprintf("Date: %s\n", utils.GetCurrentTime()))
+		commitObjSb.WriteString(fmt.Sprintf("Message: %s", commitMessage))
+
+		commitObjHashValue, err := utils.HandFileContent([]byte(commitObjSb.String()))
+		if err != nil {
+			log.Fatalf("Cannot generate hash value for commit object")
+		}
+
+		// Create commit object and store in objects folder
+		os.Mkdir(fmt.Sprintf(".git-go/objects/%s", commitObjHashValue[:2]), 0755)
+		commitObjFilePath := fmt.Sprintf(".git-go/objects/%s/%s", commitObjHashValue[:2], commitObjHashValue[2:])
+		commitObj, err := os.Create(commitObjFilePath)
+
+		if err != nil {
+			log.Fatalln("Error when creating commit object")
+		}
+		defer commitObj.Close()
+
+		var commitObjCompressBuf bytes.Buffer
+		err = utils.CompressContent(&commitObjCompressBuf, []byte(commitObjSb.String()))
+		if err != nil {
+			log.Fatalln("Error when compressing commit object")
+		}
+		// Write compressed content to object file
+		commitObj.Write(commitObjCompressBuf.Bytes())
+
+		// Add commit hash value as current branch value
+		utils.UpdateCommitHashValue(commitObjHashValue)
 	},
 }
 
