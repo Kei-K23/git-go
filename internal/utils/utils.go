@@ -176,8 +176,8 @@ func DecompressContent(compressedBuf *bytes.Buffer) ([]byte, error) {
 	return decompressBuf.Bytes(), nil
 }
 
-// Get current HEAD branch (e.g main or dev, etc...)
-func GerCurrentHEAD() string {
+// Get current active branch (e.g main or dev, etc...)
+func GerCurrentBranch() string {
 	var headFileContentBuf bytes.Buffer
 	headFile, err := os.Open(".git-go/HEAD")
 
@@ -207,13 +207,18 @@ func GerCurrentHEAD() string {
 }
 
 // Get current commit hash
-func GetCurrentCommit() {
-	currentBranch := GerCurrentHEAD()
+func GetCurrentCommit() string {
+	currentBranch := GerCurrentBranch()
 	latestCommitFilePath := fmt.Sprintf(".git-go/refs/heads/%s", currentBranch)
 
 	var latestCommitBuf bytes.Buffer
-	if _, err := os.Open(latestCommitFilePath); err != nil {
+	latestCommitFile, err := os.Open(latestCommitFilePath)
+	if err != nil {
 		log.Fatalln("Error while reading commit file")
 	}
 
+	latestCommitBuf.ReadFrom(latestCommitFile)
+
+	// Return the hash value of latest commit obj hash value
+	return latestCommitBuf.String()
 }
