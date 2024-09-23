@@ -61,7 +61,7 @@ var addCmd = &cobra.Command{
 				// example content of index file data without compression 100644 76c7b5bdd3d61bb2657e00b06870f4553294d2a9 README.md
 				entries, err := utils.ReadIndexFile()
 				if err != nil {
-					log.Fatalln("Error when reading index file content")
+					log.Fatalln("Error while reading index file content")
 				}
 
 				updatedEntires := utils.UpdateIndexFileHashValue(entries, file, hashValue)
@@ -69,7 +69,7 @@ var addCmd = &cobra.Command{
 				err = utils.WriteIndexFile(updatedEntires)
 
 				if err != nil {
-					log.Fatalln("Error when adding entry to index file")
+					log.Fatalln("Error while adding entry to index file")
 				}
 
 				fmt.Printf("Stored object as : %s\n", blogFilePath)

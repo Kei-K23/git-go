@@ -5,3 +5,5 @@
 ## Features
 
 - Initialize a new Git repository or reinitialize an existing one (`init`)
+- Add files to the staging area (`add`)
+- Commit changes to the repository (`commit`)
