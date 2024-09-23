@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 type IndexEntry struct {
@@ -173,4 +174,46 @@ func DecompressContent(compressedBuf *bytes.Buffer) ([]byte, error) {
 	}
 
 	return decompressBuf.Bytes(), nil
+}
+
+// Get current HEAD branch (e.g main or dev, etc...)
+func GerCurrentHEAD() string {
+	var headFileContentBuf bytes.Buffer
+	headFile, err := os.Open(".git-go/HEAD")
+
+	if os.IsNotExist(err) {
+		log.Fatalln("HEAD file is not exist")
+	}
+
+	// Read head file content
+	_, err = headFileContentBuf.ReadFrom(headFile)
+	if err != nil {
+		log.Fatalln("Error while reading HEAD content")
+	}
+
+	parts := strings.Split(headFileContentBuf.String(), " ")
+	if len(parts) != 2 || parts[0] != "ref:" {
+		log.Fatalln("Invalid HEAD content format")
+	}
+
+	// Extract branch name by splitting the ref path by "/"
+	refParts := strings.Split(parts[1], "/")
+	if len(refParts) < 3 {
+		log.Fatalln("Invalid ref format in HEAD file")
+	}
+	branch := refParts[2] // This is the branch name
+
+	return branch
+}
+
+// Get current commit hash
+func GetCurrentCommit() {
+	currentBranch := GerCurrentHEAD()
+	latestCommitFilePath := fmt.Sprintf(".git-go/refs/heads/%s", currentBranch)
+
+	var latestCommitBuf bytes.Buffer
+	if _, err := os.Open(latestCommitFilePath); err != nil {
+		log.Fatalln("Error while reading commit file")
+	}
+
 }

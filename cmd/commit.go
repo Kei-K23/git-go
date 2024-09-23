@@ -72,6 +72,12 @@ var commitCmd = &cobra.Command{
 
 		// Add compressed file content call blob to objects file
 		treeObj.Write(treeCompressBuf.Bytes())
+
+		// TODO : handle to include Parent commit
+		// Create commit obj blob
+		var commitObjSb strings.Builder
+		commitObjSb.WriteString(fmt.Sprintf("Tree: %s", treeHash))
+
 	},
 }
 
