@@ -30,12 +30,14 @@ var commitCmd = &cobra.Command{
 		// Main logic to handle commit start here
 
 		// Read index file and get blobs to use as tree for project snapshot
-		var sb strings.Builder
 		entries, err := utils.ReadIndexFile()
-		if err != nil {
-			log.Fatalln("Error while reading index file content")
+		if err != nil || len(entries) == 0 {
+			fmt.Println("Nothing to commit. Working directory clean.")
+			os.Exit(0)
 		}
 
+		// Build tree object content
+		var sb strings.Builder
 		for _, entry := range entries {
 			var entryValue string
 			// If entry record only have one line, then don't use new line character at the end
@@ -75,20 +77,23 @@ var commitCmd = &cobra.Command{
 
 		// Create commit obj blob
 		var commitObjSb strings.Builder
-		commitObjSb.WriteString(fmt.Sprintf("Tree: %s\n", treeHash))
+		commitObjSb.WriteString(fmt.Sprintf("tree %s\n", treeHash))
 
 		// Get and check current commit hash value to add as parent commit
 		latestCommit := utils.GetCurrentCommit()
 		if latestCommit != "" {
 			// Add current commit hash value as parent commit when create new commit
-			commitObjSb.WriteString(fmt.Sprintf("Parent: %s\n", latestCommit))
+			commitObjSb.WriteString(fmt.Sprintf("parent %s\n", latestCommit))
 		}
 
+		// Add author and committer info
 		// TODO : Handle hard coded value of author name and email
-		commitObjSb.WriteString(fmt.Sprintf("Author: %s\n", "author"))
-		commitObjSb.WriteString(fmt.Sprintf("Email: %s\n", "author@gmail.com"))
-		commitObjSb.WriteString(fmt.Sprintf("Date: %s\n", utils.GetCurrentTime()))
-		commitObjSb.WriteString(fmt.Sprintf("Message: %s", commitMessage))
+		author := "author <author@gmail.com>" // Replace with dynamic values if needed
+		date := utils.GetCurrentTime()        // Use real date-time formatting
+
+		commitObjSb.WriteString(fmt.Sprintf("author %s %s\n", author, date))
+		commitObjSb.WriteString(fmt.Sprintf("committer %s %s\n", author, date))
+		commitObjSb.WriteString(fmt.Sprintf("\n%s\n", commitMessage))
 
 		commitObjHashValue, err := utils.HandFileContent([]byte(commitObjSb.String()))
 		if err != nil {
@@ -115,6 +120,8 @@ var commitCmd = &cobra.Command{
 
 		// Add commit hash value as current branch value
 		utils.UpdateCommitHashValue(commitObjHashValue)
+
+		fmt.Printf("[master %s] %s\n", commitObjHashValue, commitMessage)
 	},
 }
 
