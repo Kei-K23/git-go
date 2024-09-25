@@ -243,6 +243,28 @@ func UpdateCommitHashValue(newHash string) {
 	}
 }
 
+// Read commit object
+func ReadCommitObject(hashValue string) []byte {
+	var buf bytes.Buffer
+	// Path to commit object
+	filePath := fmt.Sprintf(".git-go/objects/%s/%s", hashValue[:2], hashValue[2:])
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatalln("Error while reading commit object file")
+	}
+
+	// Read file content
+	buf.ReadFrom(file)
+	// Decompress the file content (everything is compress with zlib compression)
+	decompressBuf, err := DecompressContent(&buf)
+	if err != nil {
+		log.Fatalln("Error while decompressing commit object content")
+	}
+
+	return decompressBuf // Return decompress bytes buffer
+}
+
 // Get the current time in RFC3339 format
 func GetCurrentTime() string {
 	return time.Now().Format(time.RFC3339)
