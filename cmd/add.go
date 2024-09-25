@@ -23,6 +23,13 @@ var addCmd = &cobra.Command{
 				// TODO:: Check whether should i use log.Fatalln or fmt.println
 				log.Fatalf("File '%s' does not exist", file)
 			} else {
+				// Check is file is already added or if file content is modified
+				isModified := utils.IsFileModified(file)
+				if !isModified {
+					fmt.Printf("'%s' file is already in staging area\n", file)
+					os.Exit(0)
+				}
+
 				// Read file content
 				fileContentBytes, err := os.ReadFile(file)
 				if err != nil {

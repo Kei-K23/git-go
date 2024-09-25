@@ -265,6 +265,40 @@ func ReadCommitObject(hashValue string) []byte {
 	return decompressBuf // Return decompress bytes buffer
 }
 
+// Get hash value of staging file with their file name
+func GetHashValueOfStagedFile(filename string) string {
+	entries, err := ReadIndexFile()
+	if err != nil {
+		log.Fatalln("Error while reading index file")
+	}
+
+	for _, entry := range entries {
+		if entry.Path == filename {
+			return entry.Hash
+		}
+	}
+	// Not found, then return empty string
+	return ""
+}
+
+// Check file is made changes and modified to use in (e.g before adding file to staging area make sure file is modified or not)
+func IsFileModified(filename string) bool {
+	// Read file content
+	fileContentBytes, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("Cannot read the content of file '%s'", filename)
+	}
+
+	newHashValue, err := HandFileContent(fileContentBytes)
+	if err != nil {
+		log.Fatalf("Cannot generate hash value for file '%s'", filename)
+	}
+
+	oldHashValue := GetHashValueOfStagedFile(filename)
+
+	return newHashValue != oldHashValue
+}
+
 // Get the current time in RFC3339 format
 func GetCurrentTime() string {
 	return time.Now().Format(time.RFC3339)

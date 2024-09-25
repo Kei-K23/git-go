@@ -21,6 +21,9 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Record changes to the repository",
 	Run: func(cmd *cobra.Command, args []string) {
+		// TODO :: Must TODO
+		// Handle and check all updated files are added to staging area and if some file have changes that are different from staged file the commit should not be perform until all file are added to staging area
+
 		// Check -m flag is exist
 		if commitMessage == "" {
 			fmt.Println("No commit message provided. Use -m to provide a message.")
