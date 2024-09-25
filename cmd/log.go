@@ -4,6 +4,7 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Kei-K23/git-go/internal/utils"
@@ -28,20 +29,52 @@ var logCmd = &cobra.Command{
 		currentCommit := latestCommit
 
 		for currentCommit != "" {
-			var parentCommit string
 			// Get the current commit object
 			currentCommitBytes := utils.ReadCommitObject(currentCommit)
+			currentCommitContent := string(currentCommitBytes)
+			parts := strings.Split(currentCommitContent, "\n")
 
-			parts := strings.Split(string(currentCommitBytes), "\n")
+			var author, date, message, parentCommit string
 
 			for _, part := range parts {
+				// Parse author information
+				if strings.HasPrefix(part, "author") && part != "" {
+					// Example for author content (e.g author author <author@gmail.com> 2024-09-25T19:32:44+06:30)
+					authorParts := strings.SplitN(part, " ", 3)
+					author = authorParts[1] + " " + authorParts[2]
+				}
 
+				if strings.HasPrefix(part, "committer") && part != "" {
+					// Example for committer content (e.g committer author <author@gmail.com> 2024-09-25T19:32:44+06:30)
+					dateParts := strings.SplitN(part, " ", 3)
+					date = dateParts[2]
+				}
+
+				// Parse parent commit, if it is exist
+				if strings.HasPrefix(part, "parent") && part != "" {
+					parentParts := strings.Split(part, " ")
+					parentCommit = parentParts[1] // Get the parent hash value
+				}
+
+				// Parse message content
+				if part == "" && len(part) == 0 {
+					// Commit message starts after the first empty line
+					messageIndex := strings.Index(currentCommitContent, "\n\n")
+
+					if messageIndex != -1 {
+						message = currentCommitContent[messageIndex+2:]
+					}
+				}
 			}
+
+			fmt.Printf("commit %s\n", currentCommit)
+			fmt.Printf("Author %s\n", author)
+			fmt.Printf("Date %s\n", date)
+			fmt.Printf("\t%s\n", message)
+
+			// Move to parent commit object
+			currentCommit = parentCommit
 		}
-
-		// Recursively call commit object by following parent commit tress
-
-		// Show human-readable commit log messages
 	},
 }
 
