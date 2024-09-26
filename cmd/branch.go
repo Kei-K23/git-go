@@ -12,13 +12,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var branchName string // variable to store branch name to use in deletion of branch
+
 // branchCmd represents the branch command
 var branchCmd = &cobra.Command{
 	Use:   "branch",
 	Short: "List, create, or delete branches",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// If delete branch flag exist, then perform branch deletion
+		if branchName != "" {
+			err := os.Remove(".git-go/refs/heads/" + branchName)
+			if err != nil {
+				log.Fatalf("Error while deletion of '%s' branch\n", branchName)
+			}
+			fmt.Printf("Branch name '%s' is deleted\n", branchName)
+			os.Exit(0)
+		}
+
 		// Create new branch is branch name is provided
 		if len(args) > 0 {
+			// Check that branch name already exist
+			dirEntries, err := os.ReadDir(".git-go/refs/heads")
+			if err != nil {
+				log.Fatalln("Error while reading heads dir")
+			}
+
+			for _, entry := range dirEntries {
+				if entry.Name() == args[0] {
+					fmt.Printf("Branch '%s' is already exist\n", args[0])
+					os.Exit(0)
+				}
+			}
+
 			path := ".git-go/refs/heads/" + args[0]
 			file, err := os.Create(path)
 			if err != nil {
@@ -46,5 +72,6 @@ var branchCmd = &cobra.Command{
 }
 
 func init() {
+	branchCmd.Flags().StringVarP(&branchName, "delete", "d", "", "Delete the branch")
 	rootCmd.AddCommand(branchCmd)
 }
