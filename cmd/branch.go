@@ -56,7 +56,8 @@ var branchCmd = &cobra.Command{
 			currentCommit := utils.GetCurrentCommit()
 
 			file.Write([]byte(currentCommit))
-			fmt.Printf("New branch call '%s' is created", args[0])
+			fmt.Printf("New branch call '%s' is created\n", args[0])
+			os.Exit(0)
 		}
 
 		// No branch name is provided to create, then show all branch name
